@@ -1,0 +1,34 @@
+[project]
+name = "ursaring"
+version = "2024.12.0"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi-cache2>=0.2.2",
+    "fastapi[standard]>=0.115.6",
+    "httpx>=0.28.1",
+    "polars>=1.17.1",
+    "pydantic>=2.10.3",
+    "pydantic-settings>=2.6.1",
+]
+
+[dependency-groups]
+dev = [
+    "datamodel-code-generator[http]>=0.26.3",
+    "poethepoet>=0.31.1",
+]
+
+[tool.poe]
+verbosity = -1
+
+[tool.poe.tasks]
+modelgen = """
+datamodel-codegen
+    --url=https://api.ynab.com/papi/open_api_spec.yaml
+    --input-file-type=openapi
+    --output=app/models.py
+    --output-model-type=pydantic_v2.BaseModel
+    --use-annotated
+    --capitalise-enum-members
+    --disable-timestamp
+    --use-schema-description
+"""
