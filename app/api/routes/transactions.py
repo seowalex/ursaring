@@ -7,10 +7,11 @@ import httpx
 import polars as pl
 import polars.selectors as cs
 from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi_cache.decorator import cache
 from httpx import HTTPStatusError
 from pydantic import BaseModel
 
+from ...core.db import User
+from ...core.users import get_current_user
 from ...dependencies import get_http_client
 from ...models import BudgetDetailResponse, ErrorResponse
 
@@ -59,12 +60,19 @@ router = APIRouter()
         ]
     },
 )
-@cache(expire=18)  # 200 requests per hour
 async def read_transactions(
+    user: Annotated[User, Depends(get_current_user)],
     client: Annotated[httpx.AsyncClient, Depends(get_http_client)],
 ):
     try:
-        response = (await client.get("/budgets/last-used")).raise_for_status()
+        response = (
+            await client.get(
+                "/budgets/last-used",
+                headers={
+                    "Authorization": f"Bearer {user.oauth_accounts[0].access_token}"
+                },
+            )
+        ).raise_for_status()
     except HTTPStatusError as e:
         error = ErrorResponse.model_validate_json(e.response.text).error
 
